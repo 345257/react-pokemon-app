@@ -40,7 +40,6 @@ const PokeCard = ({url, name}) => {
     <>
       {
         pokemon && 
-        // <a href={`/pokemon/${name}`} className={`box-border rounded-lg ${border} w-[8.5rem] h-[8.5rem] z-0 bg-slate-800 justify-between items-center`}>
         <Link to={`/pokemon/${name}`} className={`box-border rounded-lg w-[8.5rem] h-[8.5rem] z-0 bg-slate-800 justify-between items-center`}>
           <div className={`${text} h-[1.5rem] text-xs w-full pt-1 px-2 text-right rounded-t-lg`}>
             #{pokemon.id.toString().padStart(3, '00')}
