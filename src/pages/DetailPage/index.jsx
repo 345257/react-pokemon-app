@@ -3,26 +3,29 @@ import { useEffect, useState } from "react"
 import { useParams, Link } from "react-router-dom"
 import { VscLoading, VscChevronLeft, VscChevronRight, VscArrowLeft, VscSymbolRuler, VscDashboard } from "react-icons/vsc";
 import Type from "../../components/Type";
+import BaseStat from "../../components/BaseStat";
+import DamageModal from "../../components/DamageModal";
 
 const DetailPage = () => {
   const [pokemon, setPokemon] = useState()
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(false)
+  const [isModalOpen, setIsModalOpen] = useState(false)
 
   const params = useParams()
   const pokemonId = params.id
   const baseUrl = `https://pokeapi.co/api/v2/pokemon/`
 
-
   useEffect(() => {
-    fetchPokemonData()
-  }, [])
+    setIsLoading(true)
+    fetchPokemonData(pokemonId)
+  }, [pokemonId])
 
-  async function fetchPokemonData() {
-    const url = `${baseUrl}${pokemonId}`
+  async function fetchPokemonData(id) {
+    const url = `${baseUrl}${id}`
     try {
       const {data: pokemonData} = await axios.get(url)
       if(pokemonData) {
-        const {name, id, types, weight, height, stats, abilities} = pokemonData
+        const {name, id, types, weight, height, stats, abilities, sprites} = pokemonData
         const nextAndPreviousPokemon = await getNextAndPreviousPokemon(id)
         const DamageRelations = await Promise.all(
           types.map(async (i) => {
@@ -41,7 +44,9 @@ const DetailPage = () => {
           abilities: formatPokemonAbilities(abilities), 
           stats: formatPokemonStats(stats), 
           DamageRelations, 
-          types: types.map(type => type.type.name)
+          types: types.map(type => type.type.name), 
+          sprites: foramtPokemonSprites(sprites), 
+          description: await getPokemonDescription(id)
         }
         setPokemon(formattedPokemonData)
         setIsLoading(false)
@@ -50,6 +55,30 @@ const DetailPage = () => {
       console.log(error)
       setIsLoading(false)
     }
+  }
+
+  const filterAndFormatDescription = (flavorText) => {
+    const enDescription = flavorText
+      ?.filter((text) => text.language.name === 'en')
+      .map((text) => text.flavor_text.replace(/\r|\n|\f/g, ' '))
+    return enDescription
+  }
+
+  const getPokemonDescription = async (id) => {
+    const url = `https://pokeapi.co/api/v2/pokemon-species/${id}/`
+    const {data: pokemonSpecies} = await axios.get(url)
+    const descriptions = filterAndFormatDescription(pokemonSpecies.flavor_text_entries)
+    return descriptions[Math.floor(Math.random() * descriptions.length)]
+  }
+
+  const foramtPokemonSprites = (sprites) => {
+    const newSprites = {...sprites}
+    Object.keys(newSprites).forEach(key => {
+      if(typeof newSprites[key] !== 'string') {
+        delete newSprites[key]
+      }
+    })
+    return Object.values(newSprites)
   }
 
   const formatPokemonStats = ([statHp, statATK, statDEP, statSATK, statSDEP, statSPD]) => [
@@ -101,12 +130,12 @@ const DetailPage = () => {
       <article className="flex items-center gap-1 flex-col w-full">
         <div className={`${bg} w-auto h-full flex flex-col z-0 items-center justify-end relative overflow-hidden`}>
           {pokemon.previous && (
-            <Link className="absolute top-[40%] -translate-y-1/2 z-50 left-1 text-slate-100" to={`${pokemon.previous}`}>
+            <Link className="absolute top-[40%] -translate-y-1/2 z-50 left-1 text-slate-100" to={`/pokemon/${pokemon.previous}`}>
               <VscChevronLeft className="w-10 h-16 p-1"/>
             </Link>
           )}
           {pokemon.next && (
-            <Link className="absolute top-[40%] -translate-y-1/2 z-50 right-1" to={`${pokemon.next}`}>
+            <Link className="absolute top-[40%] -translate-y-1/2 z-50 right-1" to={`/pokemon/${pokemon.next}`}>
               <VscChevronRight className="w-10 h-16 p-1 text-slate-100"/>
             </Link>
           )}
@@ -125,7 +154,7 @@ const DetailPage = () => {
               </div>
             </div>
             <div className="relative h-auot max-w-[15.5rem] z-20 mt-6 -mb-16">
-              <img src={img} width="100%" height="auto" loading="lazy" alt={pokemon.name} className={`object-contain h-full`}></img>
+              <img src={img} width="100%" height="auto" loading="lazy" alt={pokemon.name} className={`object-contain h-full`} onClick={() => setIsModalOpen(true)}></img>
             </div>
           </section>
           <section className="w-full min-h-[65%] h-full bg-gray-800 z-10 pt-14 flex flex-col items-center gap-3 px-5 pb-4">
@@ -135,7 +164,7 @@ const DetailPage = () => {
               ))}
             </div>
             <h2 className={`text-base font-semibold ${text}`}>
-              info
+              Info
             </h2>
             <div className="flex w-full items-center justify-between max-w-[400px] text-center">
               <div className="w-full">
@@ -166,21 +195,31 @@ const DetailPage = () => {
               </div>
             </div>
             <h2 className={`text-base font-semibold ${text}`}>
-              기본 능력치
+              Basic stats
             </h2>
             <div className="w-full">
-              Stat
+              <table>
+                <tbody>
+                  {pokemon.stats.map((stat) =>(
+                    <BaseStat key={stat.name} valueStat={stat.baseStat} nameStat={stat.name} type={pokemon.types[0]}/>
+                  ))}
+                </tbody>
+              </table>
             </div>
-            {pokemon.DamageRelations && (
-              <div className="w-10/12">
-                <h2 className={`text-base text-center font-semibold ${text}`}>
-                  데미지 관계
-                </h2>
-                데미지
-              </div>
-            )}
+            <h2 className={`text-base font-semibold ${text}`}>
+              Description
+            </h2>
+            <p className="text-md leading-4 font-sans text-zinc-200 max-w-[30rem] text-center">
+              {pokemon.description}
+            </p>
+            <div className="flex my-8 flex-wrap justify-center">
+              {pokemon.sprites.map((url, index) => (
+                <img key={index} src={url} alt="sprite"></img>
+              ))}
+            </div>
           </section>
         </div>
+        {isModalOpen && <DamageModal setIsModalOpen={setIsModalOpen} damages={pokemon.DamageRelations}/>}
       </article>
     </>
   )
