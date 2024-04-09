@@ -194,17 +194,19 @@ const DetailPage = () => {
                   ))}
               </div>
             </div>
-            <h2 className={`text-base font-semibold ${text}`}>
-              Basic stats
-            </h2>
-            <div className="w-full">
-              <table>
-                <tbody>
-                  {pokemon.stats.map((stat) =>(
-                    <BaseStat key={stat.name} valueStat={stat.baseStat} nameStat={stat.name} type={pokemon.types[0]}/>
-                  ))}
-                </tbody>
-              </table>
+            <div className="justify-center text-center">
+              <h2 className={`text-base font-semibold ${text}`}>
+                Basic stats
+              </h2>
+              <div className="w-full">
+                <table>
+                  <tbody>
+                    {pokemon.stats.map((stat) =>(
+                      <BaseStat key={stat.name} valueStat={stat.baseStat} nameStat={stat.name} type={pokemon.types[0]}/>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
             <h2 className={`text-base font-semibold ${text}`}>
               Description
