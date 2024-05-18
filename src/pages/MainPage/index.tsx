@@ -2,10 +2,11 @@ import { useEffect, useState } from 'react'
 import axios from 'axios'
 import PokeCard from '../../components/PokeCard'
 import AutoComplete from '../../components/AutoComplete'
+import { PokemonData, PokemonNameAndUrl } from '../../types/PokemonData'
 
 const MainPage = () => {
-  const [allPokemons, setAllPokemons] = useState([])
-  const [displayedPokemons, setDisplayPokemons] = useState([])
+  const [allPokemons, setAllPokemons] = useState<PokemonNameAndUrl[]>([])
+  const [displayedPokemons, setDisplayPokemons] = useState<PokemonNameAndUrl[]>([])
   const limitNum = 20
   const url = `https://pokeapi.co/api/v2/pokemon/?limit=1008&offset=0`
 
@@ -13,15 +14,15 @@ const MainPage = () => {
     fetchPokeData()
   }, [])
 
-  const filterDisplayedPokemonData = (allPokemonData, displayedPokemons = []) => {
+  const filterDisplayedPokemonData = (allPokemonData: PokemonNameAndUrl[], displayedPokemons: PokemonNameAndUrl[] = []) => {
     const limit = displayedPokemons.length + limitNum
-    const array = allPokemonData.filter((pokemon, index) => index + 1 <= limit)
+    const array = allPokemonData.filter((_, index) => index + 1 <= limit)
     return array
   }
 
   const fetchPokeData = async () => {
     try {
-      const response = await axios.get(url)
+      const response = await axios.get<PokemonData>(url)
       setAllPokemons(response.data.results)
       setDisplayPokemons(filterDisplayedPokemonData(response.data.results))
     }catch(error) {
@@ -38,7 +39,7 @@ const MainPage = () => {
         <div className='flex flex-row flex-wrap gap-[16px] items-center justify-center px-2 max-w-4xl'>
           {displayedPokemons.length > 0 ?
             (
-              displayedPokemons.map(({url, name}, index) => (
+              displayedPokemons.map(({url, name}: PokemonNameAndUrl) => (
                 <PokeCard key={url} url={url} name = {name}/>
               ))
             ) : 
